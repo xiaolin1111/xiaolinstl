@@ -1,5 +1,5 @@
-#ifndef _TYPE_TRAUTS_H_
-#define _TYPE_TRAITS_H_
+#ifndef TYPE_TRAITS_H_
+#define TYPE_TRAITS_H_
 
 namespace linstl
 {
@@ -61,16 +61,6 @@ struct m_type_traits<unsigned char>
     typedef true_type    is_POD_type;
 };
 
-
-template<>
-struct m_type_traits<signed int>
-{
-    typedef true_type    has_trivial_default_constructor;
-    typedef true_type    has_trivial_copy_constructor;
-    typedef true_type    has_trivial_assignment_operator;
-    typedef true_type    has_trivial_destructor;
-    typedef true_type    is_POD_type;
-};
 
 template<>
 struct m_type_traits<short>

@@ -1,3 +1,5 @@
+#ifndef  ALOG_H_
+#define  ALOG_H_
 namespace linstl
 {
 
@@ -20,15 +22,17 @@ void swap(T& lhs,T& rhs)
     lhs = rhs;
     rhs = tmp;
 }
-//指针偏特化
+
 template<class T>
-void swap<T*>(T* lhs,T* rhs)
+inline
+void swap(T* p1,T* p2)
 {
-    T* tmp = lhs;
-    lhs = rhs;
-    rhs = tmp;
+    int *p = p1;
+    p1 = p2;
+    p2 = p;
 }
 
 
 
 }
+#endif

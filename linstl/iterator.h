@@ -1,3 +1,5 @@
+#ifndef ITERATOR_H_
+#define ITERATOR_H_
 #include<cstddef>        //ptrdiff_t
 namespace linstl{
 
@@ -87,7 +89,7 @@ template<class Iter>
 inline typename iterator_traits<Iter>::value_type*
 value_type(const Iter&)
 {
-    typedef typename iterator<Iter>::value_type value_type;
+    typedef typename iterator_traits<Iter>::value_type value_type;
     return static_cast<value_type*>(0);        //返回一个T*
 }
 //**********************************************************************
@@ -104,7 +106,7 @@ template<class InputIter>
 inline typename iterator_traits<InputIter>::difference_type
 distance_12(InputIter first,InputIter last,input_iter_tag)
 {
-    iterator_traits<InputIter>::difference_type n = 0;
+    typename iterator_traits<InputIter>::difference_type n = 0;
     while(first!=last)
     {
         n++;
@@ -151,3 +153,5 @@ inline advance_12(RandomIter& first,Distance n,random_iter_tag)
 }
 
 }
+
+#endif

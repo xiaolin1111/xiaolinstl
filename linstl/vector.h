@@ -1,5 +1,5 @@
-#ifndef _VECTOR_H_
-#define _VECTOR_H_
+#ifndef VECTOR_H_
+#define VECTOR_H_
 
 //注：有些函数写在类内是为了让大家更直观的看到函数实现，并且节省空间，并非一定是内联函数
 //    移动操作需告知编译器 noexcept
@@ -8,11 +8,10 @@
 //    还有许多需要修改的地方，优化的地方，有能力的小伙伴可以自行添加哦
 
 #include <initializer_list>
-#include "construct.h"
 #include "allocator.h"
-#include "iterator.h"
 #include "allocator_alog.h"
-#include "except.h"     
+#include "except.h"    
+#include "alog.h"
 
 namespace linstl{
 
@@ -20,7 +19,7 @@ namespace linstl{
 template <class T>
 class vector 
 {
-    friend void linstl::swap(vector<T>& lhs,vector<T>& rhs);
+    
 
 public:
     
@@ -60,9 +59,6 @@ public:
     //拷贝
     vector(const vector<T>& vec){ copy_initialize(vec.begin(),vec.end()); }
 
-    //拷贝赋值
-    vector& operator=(const vector<T>& vec);
-
     //移动构造函数
     vector(vector<T>&& vec) noexcept
     :start(vec.start),finish(vec.finish),max_memory(vec.max_memory)
@@ -71,14 +67,9 @@ public:
     }
 
     //移动赋值运算符
-    vector& operator=(vector<T>&& vec) noexcept
-    {
-        data_allocator::deallocate(start,max_memory-start);
-        start      = vec.start;
-        finish     = vec.finish;
-        max_memory = vec.max_memory;
-        vec.start  = vec.finish  = vec.max_memory = nullptr;
-    }
+    vector& operator=(const vector<T>& vec);
+
+    vector& operator=(vector<T>&& vec) noexcept;
 
 
 
@@ -107,11 +98,11 @@ public:
 
     void pop_back(){ if(start==finish) return; data_allocator::destroy(*--finish); }
 
-    reference front(){ return &(*start); }
+    reference front(){ return *start; }
 
-    reference back(){ return &(*(finish-1));}
+    reference back(){ return *(finish-1);}
 
-    reference at(const size_type& n){ assert(n<max_memory-start); return &(*(start+n)); }
+    reference at(const size_type& n){ assert(n<max_memory-start); return *(start+n); }
     
     //第一个参数为迭代器
     iterator insert(iterator iter,const value_type& value) noexcept;                     
@@ -125,17 +116,15 @@ public:
 
     iterator insert(iterator p,const std::initializer_list<T>& il);
     
-    //同上
     void erase(iterator iter) noexcept;
-
-    void erase(sizse_type n) noexcept
-    { assert(size()>n; erase(start+n)); }
 
     void clear() { data_allocator::destroy(start,finish); finish = start; }
 
     void reserve() noexcept;           //max_memory*2
 
     void reserve(size_type n) noexcept;
+
+    // void swap(vector<T>& rhs) noexcept;
 
 //assign，shrink to fit函数没什么用，所以选择不写，有兴趣的同学可以自行实现哦
 
@@ -156,8 +145,6 @@ public:
     T&   operator[](const size_type n);
 
     const T& operator[](const size_type n) const;
-    
-
 
 private:
     //辅助函数
@@ -184,7 +171,7 @@ void vector<T>::fill_initialize(size_type n, const T& value)
 }
 
 template<class T>
-vector<T>::iterator
+typename vector<T>::iterator
 vector<T>::copy_initialize(iterator first,iterator last)
 {
     ptrdiff_t n  = last - first;
@@ -196,7 +183,8 @@ vector<T>::copy_initialize(iterator first,iterator last)
 }
 
 template<class T>
-vector<T>& vector<T>::operator=(const vector<T>& vec)
+vector<T>& 
+vector<T>::operator=(const vector<T>& vec)
 {
     vector<T> tmp(vec);
     swap(tmp);
@@ -204,39 +192,37 @@ vector<T>& vector<T>::operator=(const vector<T>& vec)
 }
 
 template<class T>
-vector<T>& vector<T>::operator=(vector<T>&& vec) noexcept
+vector<T>& 
+vector<T>::operator=(vector<T>&& vec) noexcept
 {
-    auto n    = vec.max_memory-vec.start;
-    auto ptr1 = data_allocator::allocate(n);
-    auto ptr2 = ptr1;
-    auto ptr3 = vec.begin();
-    for(int i = 0;i < n;i++)
-    {
-        data_allocator::construct(ptr2++,*ptr3++);
-    }
-    start      = ptr1;
-    finish     = start+vec.finish-vec.start;
-    max_memory = start+n;
+    data_allocator::deallocate(start,size());
+    start      = vec.start;
+    finish     = vec.finish;
+    max_memory = vec.max_memory;
+    vec.start  = nullptr;
+    vec.finish = nullptr;
+    vec.max_memory = nullptr;
 }
 
-template<class T>
-void linstl::swap(vector<T>& lhs,vector<T>& rhs)
-{
-    linstl::swap(lhs.start,rhs.start);
-    linstl::swap(lhs.finish,rhs.finish);
-    linstl::swap(lhs.max_memory,rhs.max_memory);
-}
+// template<class T>
+// void swap(vector<T>& rhs)
+// {
+//     using linstl::swap;
+//     swap(*this.start,rhs.start);
+//     swap(*this.finish,rhs.finish);
+//     swap(*this.max_memory,rhs.max_memory);
+// }
 
 template<class T>
 void vector<T>::push_back(const value_type& value)
 {
-    if(finish == max_memory)
+    if(finish!=max_memory)
     {
-        reserve();
         data_allocator::construct(finish++,value);
     }
     else
     {
+        reserve();
         data_allocator::construct(finish++,value);
     }
 }
@@ -244,13 +230,13 @@ void vector<T>::push_back(const value_type& value)
 template<class T>
 void vector<T>::push_back(value_type&& value)
 {
-    if(finish == max_memory)
+    if(finish!=max_memory)
     {
-        reserve();
         data_allocator::construct(finish++,std::move(value));
     }
     else
     {
+        reserve();
         data_allocator::construct(finish++,std::move(value));
     }
 }
@@ -372,14 +358,6 @@ vector<T>::insert(iterator iter,const std::initializer_list<T>& il)
     return iter;
 }
 
-
-
-
-
-
-
-
-
 template<class T>
 void vector<T>::erase(iterator iter) noexcept
 {
@@ -395,17 +373,18 @@ void vector<T>::erase(iterator iter) noexcept
 template<class T>
 void vector<T>::reserve() noexcept
 {
-    auto n    = size()? 2*size():1; 
-    auto ptr1 = data_allocator::allocate(n);
-    auto ptr2 = ptr1; 
-    auto ptr3 = begin();
+    auto i      = size();
+    size_type n = i!=0? 2*size():1; 
+    T*   ptr1   = data_allocator::allocate(n);
+    auto ptr2   = ptr1; 
+    auto ptr3   = start;
     while(ptr2!=finish)
     {
         data_allocator::construct(ptr2++,std::move(*ptr3++));
     }
     data_allocator::deallocate(start,max_memory-start);
-    finish     = ptr1+finish-start;
     start      = ptr1;
+    finish     = start+i;
     max_memory = start+n;
 }
 
@@ -493,16 +472,16 @@ template<class T>
 typename vector<T>::reference               
 vector<T>::operator[](const size_type n)
 {
-    std::assert(n<size());
-    return &*(start+n);
+    check(n<size(),"index out of range");
+    return *(start+n);
 }
 
 template<class T>
 typename vector<T>::const_reference          
 vector<T>::operator[](const size_type n) const
 {
-    std::assert(n<size());
-    return &*(start+n);
+    check(n<size(),"index out of range");
+    return *(start+n);
 }
 
 }

@@ -1,8 +1,6 @@
-#ifndef _ALLOCATOR_
-#define _ALLOCATOR_
+#ifndef _ALLOCATOR_H_
+#define _ALLOCATOR_H_
 
-#include <new>
-#include<cstddef>
 #include"construct.h"
 namespace linstl{
 
@@ -21,7 +19,7 @@ public:
     static T*               allocate();
     static T*               allocate(size_type n);
     
-    static void             deallocate(T* p,size_t n);
+    static void             deallocate(T* p,size_type n);
     static void             deallocate(T* p);
 
     static void             construct(T* ptr);
@@ -47,13 +45,13 @@ T* allocator<T>::allocate()
 template<class T>
 void allocator<T>::deallocate(T* ptr,size_t n)
 {
-    ::operator delete ptr;
+    ::operator delete (ptr);
 }
 
 template<class T>
 void allocator<T>::deallocate(T* ptr)
 {
-    ::operator delete ptr;
+    ::operator delete (ptr);
 }
 
 template<class T>
@@ -67,10 +65,11 @@ void allocator<T>::construct(T* ptr,const T& value)
 {
     linstl::construct(ptr,value);
 }
+
 template<class T>
 void allocator<T>::construct(T* ptr,T&& value)
 {
-    linstl::construct(ptr,std::move(value));
+    linstl::construct(ptr,std::forward<T>(value));
 }
 
 template<class T>

@@ -1,8 +1,12 @@
-#ifndef _CONSTRUCT_H_
-#define _CONSTRUCT_H_
+#ifndef CONSTRUCT_H_
+#define CONSTRUCT_H_
 //                        该头文件负责对象的构造与析构
 #include <new>
 #include "type_traits.h"
+#include "iterator.h"
+
+
+
 namespace linstl{
 
 //construct:
@@ -15,19 +19,21 @@ void construct(T* ptr)
 }
 
 //有参构造
-template<class T1,class T2>
+template<class T>
 inline
-void construct(T1* ptr,const T2& value)
+void construct(T* ptr,const T& value) noexcept
 {
-    ::new (ptr) T1(value);         //在p指定的位置构造
+    ::new (ptr) T(value);         //在p指定的位置构造
 }
-//右值引用参数
-template<class T1,class T2>
+
+template<class T>
 inline
-void construct(T1* ptr,T2&& value)
+void construct(T* ptr,T&& value) noexcept
 {
-    ::new (ptr) T1(std::move(value));
+    ::new ((void*)ptr) T(value);
 }
+
+
 
 //destroy:
 //接受单指针参数
@@ -44,9 +50,9 @@ inline
 void destroy(Iter first,Iter last)
 {
     //判断迭代器所指类型是否容易销毁
-    typedef typename iterator_traits<first>::value_type value_type;
-    typedef typename linstl::m_type_traits<value_type>::has_trivial_destructor  trivial_Des;
-    _destroy(Iter first,Iter last,trivial_Des());
+    typedef typename iterator_traits<Iter>::value_type value_type;
+    typedef typename m_type_traits<value_type>::has_trivial_destructor  trivial_Des;
+    _destroy(first,last,trivial_Des());
 }
 
 //类类型，需要逐个销毁
