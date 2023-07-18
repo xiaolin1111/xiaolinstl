@@ -4,6 +4,7 @@
 #include "iterator.h"
 #include "type_traits.h"
 #include "construct.h"
+#include "algorithm"
 namespace linstl{
 
 //填充迭代器之间的元素
@@ -89,7 +90,7 @@ template<class InputIter,class Iter>
 void uninitialized_copy_U(InputIter first,InputIter last,Iter result,true_type)
 {
     ptrdiff_t n = last-first;
-    copy(first,last,result);
+    std::copy(first,last,result);
 }
 
 template<class InputIter,class Iter>

@@ -6,7 +6,6 @@
 #include "iterator.h"
 
 
-
 namespace linstl{
 
 //construct:
@@ -15,23 +14,23 @@ template<class T>
 inline
 void construct(T* ptr)
 {
-    ::new (ptr) T();               //调用类型T的默认构造函数
+    new (ptr) T();               //调用类型T的默认构造函数
 }
 
 //有参构造
-template<class T>
+template<class T1,class T2>
 inline
-void construct(T* ptr,const T& value) noexcept
+void construct(T1* ptr,const T2& value) noexcept
 {
-    ::new (ptr) T(value);         //在p指定的位置构造
+    new (ptr) T1(value);         //在p指定的位置构造
 }
 
-template<class T>
-inline
-void construct(T* ptr,T&& value) noexcept
-{
-    ::new ((void*)ptr) T(value);
-}
+// template<class T>
+// inline
+// void construct(T* ptr,T&& value) noexcept
+// {
+//     ::new (ptr) T(std::move(value));
+// }
 
 
 

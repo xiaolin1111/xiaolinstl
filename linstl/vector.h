@@ -45,7 +45,7 @@ public:
     explicit 
     vector(size_type n,const value_type value){ fill_initialize(n,value); }
 
-    vector(iterator begin,iterator end){ copy_initialize(begin,end); }
+    vector(const_iterator begin,const_iterator end){ copy_initialize(begin,end); }
 
     vector(std::initializer_list<T> tlist){ copy_initialize(tlist.begin(),tlist.end()); }
 
@@ -75,15 +75,19 @@ public:
 
 public:
     //迭代器操作
-    iterator begin() const { return start; }
+    iterator begin() { return start;  }
 
-    iterator end() const { return finish; }
+    iterator end()   { return finish; }
+
+    const_iterator begin() const { return start;  }
+
+    const_iterator end()   const { return finish; }  
 
     bool empty() const { return start == finish; } 
 
-    size_type size() const { return static_cast<size_type>(finish-start); }    
+    size_type size() const { return static_cast<size_type>((finish-start)); }    
 
-    size_type capecity() const { return static_cast<size_type>(max_memory-start); }
+    size_type capecity() const { return static_cast<size_type>((max_memory-start)); }
 
     size_type max_size() const { return static_cast<size_type>(max_memory-start); }
 
@@ -150,7 +154,7 @@ private:
     //辅助函数
     void     fill_initialize(size_type n,const T& value);
 
-    iterator copy_initialize(iterator first,iterator last);
+    iterator copy_initialize(const_iterator first,const_iterator last);
 
 
 
@@ -161,7 +165,7 @@ private:
 };
 
 template<class T>
-void vector<T>::fill_initialize(size_type n, const T& value)  
+void vector<T>::fill_initialize(size_type n,const T& value)  
 {
     iterator tmp = data_allocator::allocate(n);
     linstl::uninitialized_fill_n(start,n,value);
@@ -172,7 +176,7 @@ void vector<T>::fill_initialize(size_type n, const T& value)
 
 template<class T>
 typename vector<T>::iterator
-vector<T>::copy_initialize(iterator first,iterator last)
+vector<T>::copy_initialize(const_iterator first,const_iterator last)
 {
     ptrdiff_t n  = last - first;
     iterator tmp = data_allocator::allocate(n);
@@ -277,9 +281,13 @@ vector<T>::insert(iterator iter,const value_type& value) noexcept
 template<class T>
 typename vector<T>::iterator
 vector<T>::insert(iterator iter,value_type&& value) noexcept
-{
-    if(finish == max_memory) 
+{ 
+    if(finish == max_memory)
+    { 
+        size_type n = iter - start;
         reserve();
+        iter = start + n;
+    }
     
     iterator tmp = finish++;
     tmp--;
@@ -287,7 +295,7 @@ vector<T>::insert(iterator iter,value_type&& value) noexcept
     {
         data_allocator::construct(tmp+1,std::move(*tmp));
     }while(tmp--!=iter);
-    *(++tmp) = value;
+    data_allocator::construct(++tmp,std::move(value));
     return tmp;
 }
 
@@ -295,20 +303,24 @@ template<class T>
 typename vector<T>::iterator
 vector<T>::insert(iterator iter,size_type n,const value_type& value)
 {
+    size_type index= iter - start;
+    size_type len  = size();
     if(finish+n>max_memory)
     {
         size_type size = max(max_memory-start+n,2*(max_memory-start));
         reserve(size);
+        iter = start + index;
     }
-    iterator tmp = finish;
+    iterator tmp = start + len;
     tmp--;
     do
     {
         data_allocator::construct(tmp+n,std::move(*tmp));
     }while(tmp--!=iter);
     tmp = iter;
-    while(tmp!=finish) *tmp++ = value;
-    finish += n;
+    for(int i = 0;i<n;i++) 
+        data_allocator::construct(*tmp++,value);    
+    finish = start + n + len;
     return iter;
 }
 
@@ -318,20 +330,26 @@ typename vector<T>::iterator
 vector<T>::insert(Inputiter first,Inputiter last,iterator iter)
 {
     auto n = last-first;
+    size_type index= iter - start;
+    size_type len  = size();
     if(finish+n>max_memory)
     {
         size_type size = max(max_memory-start+n,2*(max_memory-start));
         reserve(size);
+        iter = start + index;
     }
-    iterator tmp = finish;
+    iterator tmp = start + len;
     tmp--;
     do
     {
         data_allocator::construct(tmp+n,std::move(*tmp));
     }while(tmp--!=iter);
     tmp = iter;
-    while(first!=last) *tmp++ = *first++;
-    finish += n;
+    for(int i = 0;i<n;i++,first++)
+    {
+        data_allocator::construct(*tmp++,*first);
+    } 
+    finish = start + n + len;
     return iter;
 }
 
@@ -341,20 +359,26 @@ vector<T>::insert(iterator iter,const std::initializer_list<T>& il)
 {
     iterator first = il.begin(),last = il.end();
     auto n = last - first;
+    size_type index= iter - start;
+    size_type len  = size();
     if(finish+n>max_memory)
     {
         size_type size = max(max_memory-start+n,2*(max_memory-start));
         reserve(size);
+        iter = start + index;
     }
-    iterator tmp = finish;
+    iterator tmp = start + len;
     tmp--;
     do
     {
         data_allocator::construct(tmp+n,std::move(*tmp));
     }while(tmp--!=iter);
     tmp = iter;
-    while(first!=last) *tmp++ = *first++;
-    finish += n;
+    for(int i = 0;i<n;i++,first++)
+    {
+        data_allocator::construct(*tmp++,*first);
+    } 
+    finish = start + n + len;
     return iter;
 }
 
@@ -375,14 +399,14 @@ void vector<T>::reserve() noexcept
 {
     auto i      = size();
     size_type n = i!=0? 2*size():1; 
-    T*   ptr1   = data_allocator::allocate(n);
+    T* ptr1   = data_allocator::allocate(n,pointer(0));
     auto ptr2   = ptr1; 
     auto ptr3   = start;
-    while(ptr2!=finish)
+    while(ptr3!=finish)
     {
         data_allocator::construct(ptr2++,std::move(*ptr3++));
     }
-    data_allocator::deallocate(start,max_memory-start);
+    data_allocator::deallocate(start);
     start      = ptr1;
     finish     = start+i;
     max_memory = start+n;
@@ -449,7 +473,7 @@ bool vector<T>::operator<(const vector<T>& vec)
             return *tmp1<*tmp2;
         }
     }
-    return this.size()<vec.size();
+    return this->size()<vec.size();
 }
 
 template<class T>
@@ -464,7 +488,7 @@ bool vector<T>::operator>(const vector<T>& vec)
             return *tmp1>*tmp2;
         }
     }
-    return this.size()>vec.size();
+    return this->size()>vec.size();
 }
 
 
