@@ -23,14 +23,6 @@ void swap(T& lhs,T& rhs)
     rhs = tmp;
 }
 
-template<class T>
-inline
-void swap(T* p1,T* p2)
-{
-    int *p = p1;
-    p1 = p2;
-    p2 = p;
-}
 
 
 

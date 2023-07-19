@@ -19,8 +19,6 @@ namespace linstl{
 template <class T>
 class vector 
 {
-    
-
 public:
     
     typedef  linstl::allocator<T>    data_allocator;
@@ -66,7 +64,7 @@ public:
         vec.start = vec.finish = vec.max_memory = nullptr;
     }
 
-    //移动赋值运算符
+    //赋值运算符
     vector& operator=(const vector<T>& vec);
 
     vector& operator=(vector<T>&& vec) noexcept;
@@ -91,7 +89,7 @@ public:
 
     size_type max_size() const { return static_cast<size_type>(max_memory-start); }
 
-    void swap(const vector<T>& vec){ swap(*this,vec); }    //调用swap的全局重载函数
+    void swap(vector<T>& vec);        
 
     void push_back(const value_type& value);
 
@@ -208,14 +206,21 @@ vector<T>::operator=(vector<T>&& vec) noexcept
     vec.max_memory = nullptr;
 }
 
-// template<class T>
-// void swap(vector<T>& rhs)
-// {
-//     using linstl::swap;
-//     swap(*this.start,rhs.start);
-//     swap(*this.finish,rhs.finish);
-//     swap(*this.max_memory,rhs.max_memory);
-// }
+template<class T>
+void vector<T>::swap(vector<T>& rhs)
+{
+    using linstl::swap;
+    swap(this->start,rhs.start);
+    swap(this->finish,rhs.finish);
+    swap(this->max_memory,rhs.max_memory);
+}
+
+template<class T>
+void swap(vector<T>& lhs,vector<T>& rhs) noexcept
+{
+    lhs.swap(rhs);
+}
+
 
 template<class T>
 void vector<T>::push_back(const value_type& value)
