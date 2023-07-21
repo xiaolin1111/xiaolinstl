@@ -39,23 +39,23 @@ int main()
         cout<<endl;
     }
     cout<<endl;
-
+    //列表初始化
     vector<int> vec2={1,2,3,4,5};
     for(int i = 0;i<vec2.size();i++)
     {
         cout<<"元素："<<vec2[i]<<" ";
     }
     cout<<endl;
+    //赋值
     vec2 = vec;
     for(int i = 0;i<vec2.size();i++)
     {
         cout<<"元素："<<vec2[i]<<" ";
     }
     cout<<endl;
+    //clear
     vec2.clear();
     cout<<"vec2的长度为："<<vec2.size()<<endl;
-
-
 
     return 0;
 }
