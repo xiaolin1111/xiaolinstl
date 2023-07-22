@@ -2,10 +2,9 @@
 #define VECTOR_H_
 
 //注：有些函数写在类内是为了让大家更直观的看到函数实现，并且节省空间，并非一定是内联函数
-//    移动操作需告知编译器 noexcept
 //    大部分函数的实现是最低程度的异常安全，有能力的小伙伴可以自行添加异常处理函数
-//    vector 包含了c++ primer 的大部分函数功能的实现，如有漏写，大家可以自行添加哦
-//    还有许多需要修改的地方，优化的地方，有能力的小伙伴可以自行添加
+//    本项目包含了c++ primer 的大部分函数功能的实现，如有漏写，大家可以自行添加哦
+//    还有许多需要添加，修改，优化的地方，有能力的小伙伴可以自行添加
 
 #include <initializer_list>
 #include "allocator.h"
@@ -22,7 +21,8 @@ class vector
 public:
     
     typedef  linstl::allocator<T>    data_allocator;
-    
+
+    typedef  random_iter_tag         iterator_category;
     typedef  T*                      iterator;     
     typedef  const T*                const_iterator;
 
@@ -106,7 +106,6 @@ public:
 
     reference at(const size_type& n){ assert(n<max_memory-start); return *(start+n); }
     
-    //第一个参数为迭代器
     iterator insert(iterator iter,const value_type& value) noexcept;                     
 
     iterator insert(iterator iter,value_type&& value) noexcept;
