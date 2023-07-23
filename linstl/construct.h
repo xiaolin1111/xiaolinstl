@@ -20,18 +20,24 @@ void construct(T* ptr)
 //有参构造
 template<class T1,class T2>
 inline
-void construct(T1* ptr,const T2& value) noexcept
+void construct(T1* p,const T2& value) noexcept
 {
-    new (ptr) T1(value);         //在p指定的位置构造
+    new (p) T1(value);         //在p指定的位置构造
 }
 
-// template<class T>
-// inline
-// void construct(T* ptr,T&& value) noexcept
-// {
-//     ::new (ptr) T(std::move(value));
-// }
+template<class T>
+inline
+void construct(T* p,T&& value) noexcept
+{
+    new (p) T(std::move(value));
+}
 
+template<class T,class ...Args>
+inline
+void construct(T* p,Args&& ...args)
+{
+    new (p) T(std::forward<Args>(args)...);
+}
 
 
 //destroy:

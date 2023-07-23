@@ -56,6 +56,8 @@ int main()
     //clear
     vec2.clear();
     cout<<"vec2的长度为："<<vec2.size()<<endl;
+    vec2.emplace_back(1);
+    cout<<vec2[0]<<endl;
 
     return 0;
 }

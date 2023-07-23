@@ -4,6 +4,23 @@
 #include"construct.h"
 namespace linstl{
 
+template<class T>
+T* _allocate(ptrdiff_t n,T*)
+{
+    return static_cast<T*>(::operator new(n*sizeof(T)));
+}
+
+template<class T>
+T* _allocate(T*)
+{
+    return static_cast<T*>(::operator new(sizeof(T)));
+}
+
+template<class T>
+void _deallocate(T* p)
+{
+    operator delete (p);
+}
 
 
 
@@ -29,11 +46,14 @@ public:
     static void             deallocate(T* p,size_type n){ return _deallocate(p); }
     static void             deallocate(T* p) { return _deallocate(p); }
 
-    static void             construct(T* ptr);
-    static void             construct(T* ptr,const T& value);
-    // static void             construct(T* ptr,T&& value);
+    static void             construct(T* p);
+    static void             construct(T* p,const T& value);
+    static void             construct(T* p,T&& value);
     
-    static void             destroy(T* ptr);
+    template <class ...Args>
+    static void             construct(T* p, Args&& ...args);
+    
+    static void             destroy(T* p);
     static void             destroy(T* first,T* last);
 
     
@@ -41,49 +61,40 @@ public:
 };
 
 template<class T>
-T* _allocate(ptrdiff_t n,T*)
+void allocator<T>::construct(T* p)
 {
-    return static_cast<T*>(::operator new(n*sizeof(T)));
+    linstl::construct(p);
 }
 
 template<class T>
-T* _allocate(T*)
+void allocator<T>::construct(T* p,const T& value)
 {
-    return static_cast<T*>(::operator new(sizeof(T)));
+    linstl::construct(p,value);
 }
 
 template<class T>
-void _deallocate(T* p)
+void allocator<T>::construct(T* p,T&& value)
 {
-    operator delete (p);
+    linstl::construct(p,std::move(value));
 }
 
 template<class T>
-void allocator<T>::construct(pointer ptr)
+template<class ...Args>
+void allocator<T>::construct(T* p, Args&& ...args)
 {
-    linstl::construct(ptr);
+    linstl::construct(p,std::forward<Args>(args)...);
+}
+
+
+
+template<class T>
+void allocator<T>::destroy(T* p)
+{
+    linstl::destroy(p);
 }
 
 template<class T>
-void allocator<T>::construct(pointer ptr,const_reference value)
-{
-    linstl::construct(ptr,value);
-}
-
-// template<class T>
-// void allocator<T>::construct(T* ptr,T&& value)
-// {
-//     linstl::construct(ptr,std::forward<T>(value));
-// }
-
-template<class T>
-void allocator<T>::destroy(pointer ptr)
-{
-    linstl::destroy(ptr);
-}
-
-template<class T>
-void allocator<T>::destroy(pointer first,pointer last)
+void allocator<T>::destroy(T* first,T* last)
 {
     linstl::destroy(first,last);
 }

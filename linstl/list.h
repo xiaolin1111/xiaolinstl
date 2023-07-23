@@ -1,5 +1,6 @@
 #ifndef LIST_H_
 #define LIST_H_
+#include <initializer_list>
 #include "allocator.h"
 
 
@@ -42,10 +43,10 @@ struct list_iterator
     reference operator* ()    { return (node->data); }
     pointer   operator->()    { return &(operator*()); }
 
-    self     operator++()    { node = (*node).next; return *this; }
-    self     operator--()    { node = (*node).pre; return *this;  }
-    self     operator++(int) { iterator tmp = *this; ++*this; return tmp; }
-    self     operator--(int) { iterator tmp = *this; --*this; return tmp; }
+    self&     operator++()    { node = (*node).next; return *this; }
+    self&     operator--()    { node = (*node).pre; return *this;  }
+    self      operator++(int) { iterator tmp = *this; ++*this; return tmp; }
+    self      operator--(int) { iterator tmp = *this; --*this; return tmp; }
 
     bool      operator==(const self& rhs) { return node == rhs.node; }
     bool      operator!=(const self& rhs) { return !(node == rhs.node); }
@@ -69,9 +70,31 @@ public:
 
     //构造函数
     list(){ head = get_node(); head->next = head; head->pre = head; }
-    
 
+    explicit list(size_type n,const value_type& value)
+    {
+        head = get_node(); 
+        head->next = head; 
+        head->pre  = head;
+        for(int i = 0;i < n;i++)
+        {
+            auto q = creat_node(value);
+            push_back(q);
+        }
+    }
     
+    list(std::initializer_list<T>& tlist)
+    {
+        head = get_node(); 
+        head->next = head; 
+        head->pre  = head;
+        auto p = tlist.begin();
+        while(p != tlist.end())
+        {
+            emplace_back(*p++);
+        }
+    }
+
     //链表操作
     iterator begin(){ iterator tmp(head->next); return tmp; }
     
@@ -92,6 +115,9 @@ public:
     void push_back (const T& value){ insert(end(),value); }
 
     void push_front(const T& value){ insert(begin(),value); }
+    
+    template<class ...Args>
+    void emplace_back(Args&& ...args);
 
     void pop_back(){ iterator tmp(end()); erase(--tmp); }
 
@@ -109,7 +135,7 @@ public:
 
 
 
-
+    //创建节点
     list_node* get_node() { return alloc.allocate(1); }
 
     void put_node(list_node* p) { alloc.deallocate(p); }
@@ -124,6 +150,7 @@ private:
 private:
     //链表头节点指针,哨兵节点,也是尾指针指向的节点
     list_node* head;     
+    //链表空间配置器
     allocator<list_node> alloc;  
 };
 
@@ -133,7 +160,7 @@ list<T>::insert(iterator pos,const value_type& value)
 {
     iterator tmp(creat_node(value));
     tmp.node->next = pos.node;
-    tmp.node->pre       = pos.node->pre;
+    tmp.node->pre  = pos.node->pre;
     pos.node->pre  = tmp.node;
     tmp.node->pre->next = tmp.node;
     return iterator(tmp);
@@ -148,6 +175,20 @@ list<T>::erase(iterator pos)
     pos->pre->next = pos->next;
     destroy_node(pos);
     return tmp;
+}
+
+template<class T>
+template<class ...Args>
+void list<T>::emplace_back(Args&& ...args)
+{
+    list_node* tmp = get_node();
+    linstl::construct(&tmp->data,std::forward<Args>(args)...);
+
+    iterator pos = end();
+    ((pos.node)->pre)->next = tmp;
+    tmp->pre = (pos.node)->pre;
+    (pos.node)->pre = tmp;
+    tmp->next = pos.node;
 }
 
 template<class T>
@@ -175,28 +216,26 @@ void list<T>::remove(const value_type& value)
 template<class T>
 void list<T>::sort(iterator first,iterator last)
 {
-    //第一个节点作为中间节点，小于mid移到左边，大于移到右边
-    iterator mid = first++;
-    iterator first1 = mid;       //记录下一次排序的首节点
-    iterator last1  = mid;       
-    last1++;                     //记录下一次排序的尾节点，前开后闭，last1前进一格       
+    if(first == last) return ;
+    //第一个节点作为中间节点，小于mid移到左边
+    iterator h      = first;        //记录下一次排序的首节点
+    iterator e      = last;
+    iterator mid    = first++;           
     while(first != last)
     {
         if(*first<*mid)
         { 
             iterator tmp = first++;
-            transfer(mid,tmp,first);
-            first1--;          
+            transfer(h,tmp,first);    //头插法
+            h--;                      //h向后移动          
         }
         else
         {
-            iterator tmp1 = first++;
-            iterator tmp2 = (mid->node).next;
-            transfer(tmp2,tmp1,first);         //last1不需要++
+            first++;              
         }
     }
-    sort(first1,mid);
-    sort(mid,last1);
+    sort(h,mid);
+    sort(++mid,e);
 }
 
 //需要先排序！！！
@@ -259,19 +298,6 @@ void list<T>::transfer(iterator pos,iterator first,iterator last)
         (first.node)->pre         = tmp.node;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 
