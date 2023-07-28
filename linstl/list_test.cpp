@@ -37,6 +37,25 @@ int main()
     {
         cout<<*iter2<<" ";
     }
+    cout<<endl;
+    list<int> l2({1,2,3,4,5,6,7,8,9,10});
+    auto iter3 = l2.begin();
+    for(;iter3!=l2.end();iter3++)
+    {
+        cout<<*iter3<<" ";
+    }
+    cout<<endl;
+    auto iter4 = l2.cbegin();
+    for(;iter4!=l2.cend();iter4++)
+    {
+        cout<<*iter4<<" ";
+    }
+    cout<<endl;
+    cout<<l2.size();
+    cout<<endl;
+    l2.clear();
+    cout<<l2.size();
+
     return 0;
 
 

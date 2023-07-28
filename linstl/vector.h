@@ -63,9 +63,12 @@ public:
     {
         vec.start = vec.finish = vec.max_memory = nullptr;
     }
+    
 
     //赋值运算符
     vector& operator=(const vector<T>& vec);
+
+    vector& operator=(std::initializer_list<T> tlist){ vector tmp(tlist); swap(tmp); return *this; }
 
     vector& operator=(vector<T>&& vec) noexcept;
 
@@ -261,6 +264,7 @@ void vector<T>::emplace_back(Args&& ...args)
     else
     {
         data_allocator::construct(finish++,std::forward<Args>(args)...);
+        
 
     }
 }
