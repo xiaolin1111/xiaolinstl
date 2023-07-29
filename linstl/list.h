@@ -166,6 +166,8 @@ public:
 
     void pop_front() { erase(begin()); }
 
+    void swap(list& rhs);
+
     void clear();
 
     void remove(const value_type& value);
@@ -187,7 +189,7 @@ public:
 
     void destroy_node(list_node* p){ Alloc::destroy(p); put_node(p); }
 public:
-    //运算符重载略
+    //运算符重载
 
 
 
@@ -242,6 +244,20 @@ void list<T,Alloc>::emplace_back(Args&& ...args)
     tmp->pre = (pos.node)->pre;
     (pos.node)->pre = tmp;
     tmp->next = pos.node;
+}
+
+template<class T,class Alloc>
+void list<T,Alloc>::swap(list<T,Alloc>& rhs)
+{
+    auto tmp = this->head;
+    *this    = rhs.head;
+    rhs.head = tmp;
+}
+
+template<class T,class Alloc>
+void swap(list<T,Alloc>& lhs,list<T,Alloc>& rhs)
+{
+    lhs.swap(rhs);
 }
 
 template<class T,class Alloc>

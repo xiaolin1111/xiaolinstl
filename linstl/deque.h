@@ -9,10 +9,9 @@
 namespace linstl
 {
 
-
 //申请一块未使用的内存，默认大小为512
 template<class T,size_t Buf = Buffsize,class alloc = allocator<T>>
-class memory_block
+struct memory_block
 {
     typedef size_t               size_type;
     typedef memory_block         self;
@@ -20,14 +19,11 @@ class memory_block
     //申请内存
     memory_block(){ memory_block_init(); }
     //释放内存
-    ~memory_block(){ alloc::destroy(s,f); alloc::deallocate(s); }
+    void del_memory_block(T* h,T* t){ alloc::destroy(h,t); alloc::deallocate(h); }
 
-public:
     //内存初始化
     memory_block* memory_block_init();
 
-
-private:
     //内存块起始位置与结束位置
     T* s;      //start
     T* f;      //finish
@@ -44,14 +40,14 @@ memory_block_init()
     //出现类类型大于512时，分配一个单位的空间
     if(Buf<sizeof(T))
     {
-        start  = alloc::allocate(1);
-        finish = start+sizeof(T);
+        s  = alloc::allocate(1);
+        f  = s+sizeof(T);
     }
     else
     {
         size_type tmp = Buf/sizeof(T);
-        start         = alloc::allcoate(tmp);
-        finish        = start+tmp;
+        s             = alloc::allcoate(tmp);
+        f             = s+tmp;
     }
         pre           = nullptr;
         next          = nullptr;
@@ -80,30 +76,35 @@ public:
     ~deque_iterator() = default;
 
     //运算符重载
-    Ref operator*(){ return p; }
-    Ptr operator->(){ return &(*p); }
+    Ref operator*() const { return p; }
+    Ptr operator->() const { return &(*p); }
     self& operator++()
     { 
-        if(p == memptr->finish)
+        if(p == memptr->f&&(memptr->next == nullptr)) throw std::out_of_range("下标越界");
+        if(p == memptr->f)
         { 
             memptr = memptr->next;
-            p = memptr->start;
+            p = memptr->s;
         }
-        else p++;
+        p++;
         return *p;
     }
     self& operator--()
     {
-        if(p == memptr->start)
+        if(p == memptr->s&&(memptr->pre == nullptr)) throw std::out_of_range("下标越界");
+        if(p == memptr->s)
         {
             memptr = memptr->pre;
-            p = memptr->finish;
+            p = memptr->f;
         }
-        else p--;
+        p--;
         return *p;
     }
     self operator++(int){ deque_iterator tmp = *this; ++*this; return tmp; }
     self operator--(int){ deque_iterator tmp = *this; --*this; return tmp; }
+
+    bool operator==(const self& rhs){ return (this->p == rhs.p); }
+    bool operator!=(const self& rhs){ return !(*this == rhs); }
 
 private:
     Ptr  p;
@@ -146,7 +147,19 @@ public:
 
     iterator end(){ iterator tmp(end,tail); return tmp; }
 
-    const_iterator cend(){ const_iterator tmp(end,tail); return tmp; } 
+    const_iterator cend(){ const_iterator tmp(end,tail); return tmp; }
+
+    size_type size(){ return len; }
+
+    bool empty(){ return (start == finish); } 
+
+    void push_back(value_type& value);
+
+    void push_front(value_type& value);
+
+    void pop_back();
+
+    void pop_front(); 
 
 private:
     //辅助函数
@@ -158,6 +171,7 @@ private:
     //队列起始与结尾
     T* start;
     T* finish;
+    size_type len;
     memory_block<T>* head;      //起始内存块
     memory_block<T>* tail;      //结尾内存块
 
@@ -171,6 +185,72 @@ void deque<T,Alloc>::deque_init()
     start = head->start;
     finish= start;
 }
+
+template<class T,class Alloc>
+void deque<T,Alloc>::push_back(value_type& value)
+{
+    //空间不足时
+    if(tail->f == finish)
+    {
+        memory_block<T>* tmp = Alloc::memory_block();
+        tmp->pre   = tail;
+        tail->next = tmp;
+        finish     = tmp->s;
+        tail       = tmp;
+        linstl::construct(finish++,value);
+        len++;
+    }
+    else
+    {
+        linstl::construct(finish++,value);
+        len++;
+    }
+}
+
+template<class T,class Alloc>
+void deque<T,Alloc>::push_front(value_type& value)
+{
+    if(head->s == start)
+    {
+        memory_block<T>* tmp = Alloc::memory_block();
+        tmp->next = head;
+        head->pre = tmp;
+        start     = tmp->f;
+        head      = tmp;
+        Alloc::construct(++start,value);
+        len++;
+    }
+    else
+    {
+        Alloc::construct(++start,value);
+        len++;
+    }
+}
+
+template<class T,class Alloc>
+void deque<T,Alloc>::pop_back()
+{
+    if(start == finish) return;
+    if(tail->s == (--finish))
+    {
+        memory_block<T>* tmp = tail;
+        Alloc::del_memory_block(tail->s,tail->f);
+        tail   = tmp;
+        finish = tail->f;
+        len--;
+    }
+    else
+    {
+        Alloc::destroy(finish);
+        len--;
+    }
+}
+
+
+
+
+
+
 
 
 
