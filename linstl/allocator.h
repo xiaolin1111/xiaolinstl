@@ -5,7 +5,7 @@
 namespace linstl{
 
 template<class T>
-T* _allocate(ptrdiff_t n,T*)
+T* _allocate(size_t n,T*)
 {
     return static_cast<T*>(::operator new(n*sizeof(T)));
 }
@@ -40,7 +40,7 @@ public:
     static T*               allocate(T*)
                             { return _allocate(pointer(0)); }
 
-    static pointer          allocate(size_type n,const void* p = 0)
+    static T*               allocate(size_type n,const void* p = 0)
                             { return _allocate(n,pointer(0)); }
     
     static void             deallocate(T* p,size_type n){ return _deallocate(p); }

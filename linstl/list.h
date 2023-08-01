@@ -36,8 +36,6 @@ struct list_iterator
     typedef size_t                              size_type;
     typedef ptrdiff_t                           difference_type;
 
-
-
     //构造函数
     list_iterator() = default;
     list_iterator(list_type* p):node(p){}
@@ -78,7 +76,7 @@ struct list_reverse_iterator
     list_reverse_iterator(list_type* p):node(p){}
     list_reverse_iterator(const list_reverse_iterator& p):node(p.node){}
     //运算符重载
-    Ref       operator* ()    { return (node->data); }
+    Ref       operator* ()    { return (node->pre->data); }
     Ptr       operator->()    { return &(operator*()); }
 
     //++变--，--变++
@@ -138,10 +136,18 @@ public:
     iterator begin(){ iterator tmp(head->next); return tmp; }
 
     const_iterator cbegin(){ const_iterator tmp(head->next); return tmp; }
+
+    reverse_iterator rbegin() { reverse_iterator tmp(head->pre); return tmp; }
+
+    const_reverse_iterator rcbegin() { const_reverse_iterator tmp(head->pre); return tmp; }
     
     iterator end()  { iterator tmp(head); return tmp; }
 
     const_iterator cend(){ const_iterator tmp(head); return tmp; }
+
+    reverse_iterator rend() { reverse_iterator tmp(head); return tmp; }
+
+    const_reverse_iterator rcend() { const_reverse_iterator tmp(head); return tmp; }
 
     bool empty() { return head->next == head; }
 
@@ -281,7 +287,7 @@ void list<T,Alloc>::remove(const value_type& value)
     }
 }
 
-//sort采用快排的递归版本（属于偷懒行为），小伙伴们可以尝试写非递归版本哦
+//sort采用快排的递归版本
 template<class T,class Alloc>
 void list<T,Alloc>::sort(iterator first,iterator last)
 {

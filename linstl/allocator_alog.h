@@ -63,7 +63,7 @@ void uninitialized_fill_n_U(Iter first,size_t n,const T& value,false_type)
     {
         while(n-- > 0)
         {
-            linstl::construct(first++,value);
+            linstl::construct(tmp++,value);
         }
     }
     catch(...)
@@ -89,7 +89,6 @@ void uninitialized_copy(InputIter first,InputIter last,Iter result)
 template<class InputIter,class Iter>
 void uninitialized_copy_U(InputIter first,InputIter last,Iter result,true_type)
 {
-    ptrdiff_t n = last-first;
     std::copy(first,last,result);
 }
 
@@ -108,7 +107,7 @@ void uninitialized_copy_U(InputIter first,InputIter last,Iter result,false_type)
     {
         while(tmp!=first)
         {
-            linstl::destroy(&*(--result),*--tmp);
+            linstl::destroy(tmp--);
         }
     }
     

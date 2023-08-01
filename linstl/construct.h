@@ -73,7 +73,7 @@ void _destroy(Iter first,Iter last,linstl::false_type)
 
 //内置类型，什么也不做
 template<class Iter>
-void _destroy(Iter first,Iter last,linstl::true_type){}
+void _destroy(Iter ,Iter ,linstl::true_type){}
 
 
 }

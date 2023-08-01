@@ -14,17 +14,52 @@
 
 namespace linstl{
 
+//反向迭代器
+template<class T>
+class vector_reverse_iterator
+{
+public:
+    typedef vector_reverse_iterator   self;
+    
+    typedef random_iter_tag           iterator_category;
+    typedef T                         value_type;
+    typedef ptrdiff_t                 difference_type;
+    typedef T*                        pointer;
+    typedef T&                        reference;
+    typedef size_t                    size_type;
 
-template <class T>
+    vector_reverse_iterator(){};
+    
+    vector_reverse_iterator(T* r):p(r){};
+
+    vector_reverse_iterator(self& r):p(r.p){};
+
+    //运算符重载，--变++，++变--
+    self& operator++(){ p--; return *this; }
+    self& operator--(){ p++; return *this; }
+    self  operator++(int) { self tmp = *this; --*this; return tmp; }
+    self  operator--(int) { self tmp = *this; ++*this; return tmp; }
+
+    reference operator*(){ self tmp(p); ++tmp; return *(tmp.p); }
+    pointer  operator->(){ return &(operator*()); }
+
+    self& operator+(size_type n){ p-=n; return *this; }
+    self& operator-(size_type n){ p+=n; return *this; }
+private:
+    T*  p;
+};
+
+template <class T,class Alloc = allocator<T>>
 class vector 
 {
 public:
-    
-    typedef  linstl::allocator<T>    data_allocator;
 
-    typedef  random_iter_tag         iterator_category;
+    //T*作为正向迭代器
     typedef  T*                      iterator;     
     typedef  const T*                const_iterator;
+    
+    typedef  vector_reverse_iterator<T>          reverse_iterator;
+    typedef  vector_reverse_iterator<const T>    const_reverse_iterator;
 
     typedef  T                       value_type;
     typedef  T*                      pointer;
@@ -41,38 +76,36 @@ public:
     vector(size_type n){ fill_initialize(n,value_type());}
     
     explicit 
-    vector(size_type n,const value_type value){ fill_initialize(n,value); }
+    vector(size_type n,const value_type& value){ fill_initialize(n,value); }
 
-    vector(const_iterator begin,const_iterator end){ copy_initialize(begin,end); }
+    template<class Iter>
+    vector(Iter begin,Iter end){ copy_initialize(begin,end); }
 
     vector(std::initializer_list<T> tlist){ copy_initialize(tlist.begin(),tlist.end()); }
 
-    //析构函数，先执行函数体，所以无需担心先行释放类成员
+    //析构函数
     ~vector()
     {
-        data_allocator::destroy(start,finish);
-        data_allocator::deallocate(start,capecity());
+        Alloc::destroy(start,finish);
+        Alloc::deallocate(start,capecity());
     }
 
     //拷贝
-    vector(const vector<T>& vec){ copy_initialize(vec.begin(),vec.end()); }
+    vector(const vector<T,Alloc>& vec){ copy_initialize(vec.begin(),vec.end()); }
 
     //移动构造函数
-    vector(vector<T>&& vec) noexcept
+    vector(vector<T,Alloc>&& vec) noexcept
     :start(vec.start),finish(vec.finish),max_memory(vec.max_memory)
     {
         vec.start = vec.finish = vec.max_memory = nullptr;
     }
     
-
     //赋值运算符
-    vector& operator=(const vector<T>& vec);
+    vector& operator=(const vector<T,Alloc>& vec);
 
     vector& operator=(std::initializer_list<T> tlist){ vector tmp(tlist); swap(tmp); return *this; }
 
-    vector& operator=(vector<T>&& vec) noexcept;
-
-
+    vector& operator=(vector<T,Alloc>&& vec) noexcept;
 
 public:
     //迭代器操作
@@ -80,9 +113,17 @@ public:
 
     iterator end()   { return finish; }
 
-    const_iterator begin() const { return start;  }
+    reverse_iterator rbegin() { reverse_iterator tmp(finish); return tmp; }
 
-    const_iterator end()   const { return finish; }  
+    reverse_iterator rend() { return start; }
+
+    const_iterator begin() const { return start; }
+
+    const_iterator end()   const { return finish; }
+
+    const_reverse_iterator rcbegin() { return finish; }
+
+    const_reverse_iterator rcend() { return start; }  
 
     bool empty() const { return start == finish; } 
 
@@ -92,7 +133,7 @@ public:
 
     size_type max_size() const { return static_cast<size_type>(max_memory-start); }
 
-    void swap(vector<T>& vec);        
+    void swap(vector<T,Alloc>& vec);        
 
     void push_back(const value_type& value);
 
@@ -101,7 +142,7 @@ public:
     template <class ...Args>
     void emplace_back(Args&& ...args);
 
-    void pop_back(){ if(start==finish) return; data_allocator::destroy(*--finish); }
+    void pop_back(){ if(start==finish) return; Alloc::destroy(*--finish); }
 
     reference front(){ return *start; }
 
@@ -122,29 +163,29 @@ public:
     
     void erase(iterator iter) noexcept;
 
-    void clear() { data_allocator::destroy(start,finish); finish = start; }
+    void clear() { Alloc::destroy(start,finish); finish = start; }
 
     void reserve() noexcept;           //max_memory*2
 
     void reserve(size_type n) noexcept;
 
-    // void swap(vector<T>& rhs) noexcept;
+    void sort(iterator beg,iterator end);
 
-//assign，shrink to fit函数没什么用，所以选择不写，有兴趣的同学可以自行实现哦
+//assign，shrink to fit函数有兴趣的同学可以自行实现哦
 
     
     //运算符重载
-    bool operator==(const vector<T>& vec);
+    bool operator==(const vector<T,Alloc>& vec);
 
-    bool operator!=(const vector<T>& vec) { return !(*this == vec); }
+    bool operator!=(const vector<T,Alloc>& vec) { return !(*this == vec); }
 
-    bool operator<(const vector<T>& vec);
+    bool operator<(const vector<T,Alloc>& vec);
 
-    bool operator<=(const vector<T>& vec) { return !(*this > vec); }
+    bool operator<=(const vector<T,Alloc>& vec) { return !(*this > vec); }
 
-    bool operator>(const vector<T>& vec);
+    bool operator>(const vector<T,Alloc>& vec);
 
-    bool operator>=(const vector<T>& vec) { return !(*this < vec); }
+    bool operator>=(const vector<T,Alloc>& vec) { return !(*this < vec); }
 
     T&   operator[](const size_type n);
 
@@ -154,52 +195,51 @@ private:
     //辅助函数
     void     fill_initialize(size_type n,const T& value);
 
-    iterator copy_initialize(const_iterator first,const_iterator last);
-
-
+    template<class Iter>
+    void     copy_initialize(Iter first,Iter last);
 
 private:
-    iterator  start;        //元素起始位置
-    iterator  finish;       //元素结束位置
-    iterator  max_memory;   //内存结束位置
+    T*  start;        //元素起始位置
+    T*  finish;       //元素结束位置
+    T*  max_memory;   //内存结束位置
 };
 
-template<class T>
-void vector<T>::fill_initialize(size_type n,const T& value)  
+template<class T,class Alloc>
+void vector<T,Alloc>::fill_initialize(size_type n,const T& value)  
 {
-    iterator tmp = data_allocator::allocate(n);
+    iterator tmp = Alloc::allocate(n);
+    start      = tmp;
     linstl::uninitialized_fill_n(start,n,value);
-    start      = tmp;
     finish     = start + n;
     max_memory = finish;
 }
 
-template<class T>
-typename vector<T>::iterator
-vector<T>::copy_initialize(const_iterator first,const_iterator last)
+template<class T,class Alloc>
+template<class Iter>
+void vector<T,Alloc>::copy_initialize(Iter first,Iter last)
 {
-    ptrdiff_t n  = last - first;
-    iterator tmp = data_allocator::allocate(n);
+    size_t  n  = last - first;
+    iterator tmp = Alloc::allocate(n);
+    start      = tmp;
     linstl::uninitialized_copy(first,last,tmp);
-    start      = tmp;
     finish     = start + n;
     max_memory = finish;
 }
 
-template<class T>
-vector<T>& 
-vector<T>::operator=(const vector<T>& vec)
+template<class T,class Alloc>
+vector<T,Alloc>& 
+vector<T,Alloc>::operator=(const vector<T,Alloc>& vec)
 {
-    vector<T> tmp(vec);
+    vector<T,Alloc> tmp(vec);
     swap(tmp);
     return *this;
 }
 
-template<class T>
-vector<T>& 
-vector<T>::operator=(vector<T>&& vec) noexcept
+template<class T,class Alloc>
+vector<T,Alloc>& 
+vector<T,Alloc>::operator=(vector<T,Alloc>&& vec) noexcept
 {
-    data_allocator::deallocate(start,size());
+    Alloc::deallocate(start,size());
     start      = vec.start;
     finish     = vec.finish;
     max_memory = vec.max_memory;
@@ -208,8 +248,8 @@ vector<T>::operator=(vector<T>&& vec) noexcept
     vec.max_memory = nullptr;
 }
 
-template<class T>
-void vector<T>::swap(vector<T>& rhs)
+template<class T,class Alloc>
+void vector<T,Alloc>::swap(vector<T,Alloc>& rhs)
 {
     using linstl::swap;
     swap(this->start,rhs.start);
@@ -217,61 +257,59 @@ void vector<T>::swap(vector<T>& rhs)
     swap(this->max_memory,rhs.max_memory);
 }
 
-template<class T>
-void swap(vector<T>& lhs,vector<T>& rhs) noexcept
+template<class T,class Alloc>
+void swap(vector<T,Alloc>& lhs,vector<T,Alloc>& rhs) noexcept
 {
     lhs.swap(rhs);
 }
 
 
-template<class T>
-void vector<T>::push_back(const value_type& value)
+template<class T,class Alloc>
+void vector<T,Alloc>::push_back(const value_type& value)
 {
     if(finish!=max_memory)
     {
-        data_allocator::construct(finish++,value);
+        Alloc::construct(finish++,value);
     }
     else
     {
         reserve();
-        data_allocator::construct(finish++,value);
+        Alloc::construct(finish++,value);
     }
 }
 
-template<class T>
-void vector<T>::push_back(value_type&& value)
+template<class T,class Alloc>
+void vector<T,Alloc>::push_back(value_type&& value)
 {
     if(finish!=max_memory)
     {
-        data_allocator::construct(finish++,std::move(value));
+        Alloc::construct(finish++,std::move(value));
     }
     else
     {
         reserve();
-        data_allocator::construct(finish++,std::move(value));
+        Alloc::construct(finish++,std::move(value));
     }
 }
 
-template<class T>
+template<class T,class Alloc>
 template <class ...Args>
-void vector<T>::emplace_back(Args&& ...args)
+void vector<T,Alloc>::emplace_back(Args&& ...args)
 {
     if(finish == max_memory)
     {
         reserve();
-        data_allocator::construct(finish++,std::forward<Args>(args)...);
+        Alloc::construct(finish++,std::forward<Args>(args)...);
     }
     else
     {
-        data_allocator::construct(finish++,std::forward<Args>(args)...);
-        
-
+        Alloc::construct(finish++,std::forward<Args>(args)...);
     }
 }
 
-template<class T>
-typename vector<T>::iterator
-vector<T>::insert(iterator iter,const value_type& value) noexcept
+template<class T,class Alloc>
+typename vector<T,Alloc>::iterator
+vector<T,Alloc>::insert(iterator iter,const value_type& value) noexcept
 {
     if(finish == max_memory) 
         reserve();
@@ -280,15 +318,15 @@ vector<T>::insert(iterator iter,const value_type& value) noexcept
     tmp--;
     do
     {
-        data_allocator::construct(tmp+1,std::move(*tmp));
+        Alloc::construct(tmp+1,std::move(*tmp));
     }while(tmp--!=iter);
-    data_allocator::construct(++tmp,value);
+    Alloc::construct(++tmp,value);
     return tmp;
 }
 
-template<class T>
-typename vector<T>::iterator
-vector<T>::insert(iterator iter,value_type&& value) noexcept
+template<class T,class Alloc>
+typename vector<T,Alloc>::iterator
+vector<T,Alloc>::insert(iterator iter,value_type&& value) noexcept
 { 
     if(finish == max_memory)
     { 
@@ -301,15 +339,15 @@ vector<T>::insert(iterator iter,value_type&& value) noexcept
     tmp--;
     do
     {
-        data_allocator::construct(tmp+1,std::move(*tmp));
+        Alloc::construct(tmp+1,std::move(*tmp));
     }while(tmp--!=iter);
-    data_allocator::construct(++tmp,std::move(value));
+    Alloc::construct(++tmp,std::move(value));
     return tmp;
 }
 
-template<class T>
-typename vector<T>::iterator
-vector<T>::insert(iterator iter,size_type n,const value_type& value)
+template<class T,class Alloc>
+typename vector<T,Alloc>::iterator
+vector<T,Alloc>::insert(iterator iter,size_type n,const value_type& value)
 {
     size_type index= iter - start;
     size_type len  = size();
@@ -323,19 +361,19 @@ vector<T>::insert(iterator iter,size_type n,const value_type& value)
     tmp--;
     do
     {
-        data_allocator::construct(tmp+n,std::move(*tmp));
+        Alloc::construct(tmp+n,std::move(*tmp));
     }while(tmp--!=iter);
     tmp = iter;
     for(int i = 0;i<n;i++) 
-        data_allocator::construct(*tmp++,value);    
+        Alloc::construct(*tmp++,value);    
     finish = start + n + len;
     return iter;
 }
 
-template<class T>
+template<class T,class Alloc>
 template<class Inputiter>
-typename vector<T>::iterator
-vector<T>::insert(Inputiter first,Inputiter last,iterator iter)
+typename vector<T,Alloc>::iterator
+vector<T,Alloc>::insert(Inputiter first,Inputiter last,iterator iter)
 {
     auto n = last-first;
     size_type index= iter - start;
@@ -350,20 +388,20 @@ vector<T>::insert(Inputiter first,Inputiter last,iterator iter)
     tmp--;
     do
     {
-        data_allocator::construct(tmp+n,std::move(*tmp));
+        Alloc::construct(tmp+n,std::move(*tmp));
     }while(tmp--!=iter);
     tmp = iter;
     for(int i = 0;i<n;i++,first++)
     {
-        data_allocator::construct(*tmp++,*first);
+        Alloc::construct(*tmp++,*first);
     } 
     finish = start + n + len;
     return iter;
 }
 
-template<class T>
-typename vector<T>::iterator
-vector<T>::insert(iterator iter,const std::initializer_list<T>& il)
+template<class T,class Alloc>
+typename vector<T,Alloc>::iterator
+vector<T,Alloc>::insert(iterator iter,const std::initializer_list<T>& il)
 {
     iterator first = il.begin(),last = il.end();
     auto n = last - first;
@@ -379,83 +417,105 @@ vector<T>::insert(iterator iter,const std::initializer_list<T>& il)
     tmp--;
     do
     {
-        data_allocator::construct(tmp+n,std::move(*tmp));
+        Alloc::construct(tmp+n,std::move(*tmp));
     }while(tmp--!=iter);
     tmp = iter;
     for(int i = 0;i<n;i++,first++)
     {
-        data_allocator::construct(*tmp++,*first);
+        Alloc::construct(*tmp++,*first);
     } 
     finish = start + n + len;
     return iter;
 }
 
-template<class T>
-void vector<T>::erase(iterator iter) noexcept
+template<class T,class Alloc>
+void vector<T,Alloc>::erase(iterator iter) noexcept
 {
     iterator tmp = iter;
     tmp++;
     do
     {
-        data_allocator::construct(tmp-1,std::move(*tmp));
+        Alloc::construct(tmp-1,std::move(*tmp));
     }while(tmp++!=finish);
     finish--;
 }
 
-template<class T>
-void vector<T>::reserve() noexcept
+template<class T,class Alloc>
+void vector<T,Alloc>::reserve() noexcept
 {
     auto i      = size();
     size_type n = i!=0? 2*size():1; 
-    T* ptr1   = data_allocator::allocate(n,pointer(0));
+    T* ptr1     = Alloc::allocate(n,pointer(0));
     auto ptr2   = ptr1; 
     auto ptr3   = start;
     while(ptr3!=finish)
     {
-        data_allocator::construct(ptr2++,std::move(*ptr3++));
+        Alloc::construct(ptr2++,std::move(*ptr3++));
     }
-    data_allocator::deallocate(start);
+    Alloc::deallocate(start);
     start      = ptr1;
     finish     = start+i;
     max_memory = start+n;
 }
 
-template<class T>
-void vector<T>::reserve(size_type n) noexcept
+template<class T,class Alloc>
+void vector<T,Alloc>::reserve(size_type n) noexcept
 {
     if(n>finish-start)
     {
-        auto ptr1 = data_allocator::allocate(n);
+        auto ptr1 = Alloc::allocate(n);
         auto ptr2 = ptr1; 
         auto ptr3 = begin();
         while(ptr2!=finish)
         {
-            data_allocator::construct(ptr2++,std::move(*ptr3++));
+            Alloc::construct(ptr2++,std::move(*ptr3++));
         }
-        data_allocator::deallocate(start,max_memory-start);
+        Alloc::deallocate(start,max_memory-start);
         finish     = ptr1+finish-start;
         start      = ptr1;
         max_memory = start+n;
     }
     else
     {
-        auto ptr1 = data_allocator::allocate(n);
+        auto ptr1 = Alloc::allocate(n);
         auto ptr2 = ptr1; 
         auto ptr3 = begin();
         for(int i = 0;i < n;i++)
         {
-            data_allocator::construct(ptr2++,std::move(*ptr3++));
+            Alloc::construct(ptr2++,std::move(*ptr3++));
         }
-        data_allocator::deallocate(start,max_memory-start);
+        Alloc::deallocate(start,max_memory-start);
         finish     = ptr1+n;
         start      = ptr1;
         max_memory = finish;
     }
 }
 
+template<class T,class Alloc>
+void vector<T,Alloc>::sort(iterator beg,iterator end)
+{
+    if(beg == end) return;
+    iterator h = beg;
+    iterator t = end;
+    t--;
+    T base = *h;
+    while(h != t)
+    {
+        while(*t >= base && h != t) t--;
+        while(*h <= base && h != t) h++;
+        if(h != t)
+        {
+            linstl::swap(*h,*t);
+        }
+    }
+    *beg = *h;
+    *h   = base;
+    sort(beg,h);
+    sort(++t,end);
+}
 
-template<class T>
-bool vector<T>::operator==(const vector<T>& vec)
+template<class T,class Alloc>
+bool vector<T,Alloc>::operator==(const vector<T,Alloc>& vec)
 {
     if(this->size()!=vec.size()) return false;
     
@@ -469,8 +529,8 @@ bool vector<T>::operator==(const vector<T>& vec)
     return true;
 }
 
-template<class T>
-bool vector<T>::operator<(const vector<T>& vec)
+template<class T,class Alloc>
+bool vector<T,Alloc>::operator<(const vector<T,Alloc>& vec)
 {
     iterator tmp1 = this->begin();
     iterator tmp2 = vec.begin();
@@ -484,8 +544,8 @@ bool vector<T>::operator<(const vector<T>& vec)
     return this->size()<vec.size();
 }
 
-template<class T>
-bool vector<T>::operator>(const vector<T>& vec)
+template<class T,class Alloc>
+bool vector<T,Alloc>::operator>(const vector<T,Alloc>& vec)
 {
     iterator tmp1 = this->begin();
     iterator tmp2 = vec.begin();
@@ -500,17 +560,17 @@ bool vector<T>::operator>(const vector<T>& vec)
 }
 
 
-template<class T>
-typename vector<T>::reference               
-vector<T>::operator[](const size_type n)
+template<class T,class Alloc>
+typename vector<T,Alloc>::reference               
+vector<T,Alloc>::operator[](const size_type n)
 {
     check(n<size(),"index out of range");
     return *(start+n);
 }
 
-template<class T>
-typename vector<T>::const_reference          
-vector<T>::operator[](const size_type n) const
+template<class T,class Alloc>
+typename vector<T,Alloc>::const_reference          
+vector<T,Alloc>::operator[](const size_type n) const
 {
     check(n<size(),"index out of range");
     return *(start+n);
