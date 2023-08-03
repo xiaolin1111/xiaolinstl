@@ -8,9 +8,9 @@
 
 #include <initializer_list>
 #include "allocator.h"
-#include "allocator_alog.h"
+#include "allocator_algo.h"
 #include "except.h"    
-#include "alog.h"
+#include "algo.h"
 
 namespace linstl{
 
@@ -133,7 +133,7 @@ public:
 
     size_type max_size() const { return static_cast<size_type>(max_memory-start); }
 
-    void swap(vector<T,Alloc>& vec);        
+    void swap(vector<T,Alloc>& rhs) noexcept;        
 
     void push_back(const value_type& value);
 
@@ -249,12 +249,11 @@ vector<T,Alloc>::operator=(vector<T,Alloc>&& vec) noexcept
 }
 
 template<class T,class Alloc>
-void vector<T,Alloc>::swap(vector<T,Alloc>& rhs)
+void vector<T,Alloc>::swap(vector<T,Alloc>& rhs) noexcept
 {
-    using linstl::swap;
-    swap(this->start,rhs.start);
-    swap(this->finish,rhs.finish);
-    swap(this->max_memory,rhs.max_memory);
+    linstl::swap(start,rhs.start);
+    linstl::swap(finish,rhs.finish);
+    linstl::swap(max_memory,rhs.max_memory);
 }
 
 template<class T,class Alloc>
