@@ -98,9 +98,40 @@ int main()
     vec9.emplace_back("!");
     f(vec9,"emplace_back()后vec9的元素为: ");
     
+    cout<<endl;
+    cout<<"vec9.front(): "<<vec9.front()<<"  "<<"vec9.back(): "<<vec9.back();
     
-    
-    
+    cout<<endl;
+    cout<<"vec9.at(0): "<<vec9.at(0)<<"  "<<"vec9.at(1): "<<vec9.at(1);
+
+    for(int i = 0;i < 10;i++)
+    {
+        vec9.insert(vec9.begin(),"!");
+    }
+    cout<<endl<<endl;
+    f(vec9,"在vec9头部插入10个!后:");
+
+    for(int i = 0;i < 5;i++)
+    {
+        vec9.erase(vec9.begin());
+    }
+
+    cout<<endl<<endl;
+    f(vec9,"删除vec9前五个元素后");
+
+    cout<<endl<<endl;
+    vec9.sort(vec9.begin(),vec9.end());
+    f(vec9,"排序后vec9的元素为: ");
+
+    cout<<endl;
+    cout<<"vec9的当前容量为: "<<vec9.capecity();
+    cout<<endl;
+    vec9.reserve(100);
+    cout<<"将vec9的容量设为100: "<<vec9.capecity();
+    cout<<endl;
+    vec9.reserve(10);
+    f(vec9,"将vec9的容量设为10后元素为: ");
+
     return 0;
 
 }

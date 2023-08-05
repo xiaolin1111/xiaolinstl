@@ -171,9 +171,6 @@ public:
 
     void sort(iterator beg,iterator end);
 
-//assign，shrink to fit函数有兴趣的同学可以自行实现哦
-
-    
     //运算符重载
     bool operator==(const vector<T,Alloc>& vec);
 
@@ -435,7 +432,8 @@ void vector<T,Alloc>::erase(iterator iter) noexcept
     do
     {
         Alloc::construct(tmp-1,std::move(*tmp));
-    }while(tmp++!=finish);
+        tmp++;
+    }while(tmp != finish);
     finish--;
 }
 
@@ -465,13 +463,15 @@ void vector<T,Alloc>::reserve(size_type n) noexcept
         auto ptr1 = Alloc::allocate(n);
         auto ptr2 = ptr1; 
         auto ptr3 = begin();
-        while(ptr2!=finish)
+        int  size  = 0;
+        while(ptr3!=finish)
         {
             Alloc::construct(ptr2++,std::move(*ptr3++));
+            size++;
         }
         Alloc::deallocate(start,max_memory-start);
-        finish     = ptr1+finish-start;
         start      = ptr1;
+        finish     = start+size;
         max_memory = start+n;
     }
     else

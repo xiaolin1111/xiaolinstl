@@ -1,5 +1,5 @@
-#ifndef LIST_H_
-#define LIST_H_
+#ifndef _LIST_H_
+#define _LIST_H_
 #include <initializer_list>
 #include "allocator.h"
 //注：
@@ -37,7 +37,7 @@ struct list_iterator
     typedef ptrdiff_t                           difference_type;
 
     //构造函数
-    list_iterator() = default;
+    list_iterator(){}
     list_iterator(list_type* p):node(p){}
     list_iterator(const iterator& p):node(p.node){}
     //运算符重载
@@ -72,11 +72,11 @@ struct list_reverse_iterator
 
 
     //构造函数
-    list_reverse_iterator() = default;
+    list_reverse_iterator(){}
     list_reverse_iterator(list_type* p):node(p){}
     list_reverse_iterator(const list_reverse_iterator& p):node(p.node){}
     //运算符重载
-    Ref       operator* ()    { return (node->pre->data); }
+    Ref       operator* ()    { return (node->data); }
     Ptr       operator->()    { return &(operator*()); }
 
     //++变--，--变++
@@ -122,9 +122,9 @@ public:
         }
     }
     //拷贝构造
-    list(const list<T>& l) { copy_init(l.cbegin(),l.cend()); }
+    list(list<T>& l) { copy_init(l.cbegin(),l.cend()); }
 
-    list(list<T>&& l) { head = l.head; l.head = nullptr; }
+    list(list<T>&& l) { list_init(); list_node* tmp = head; head = l.head; l.head = tmp; }
 
     //赋值
     list<T>& operator=(const list<T>& l) {  return *this; } 
@@ -133,7 +133,7 @@ public:
 
 public:
     //链表操作
-    iterator begin(){ iterator tmp(head->next); return tmp; }
+    iterator begin(){  iterator tmp(head->next); return tmp; }
 
     const_iterator cbegin(){ const_iterator tmp(head->next); return tmp; }
 
@@ -151,11 +151,11 @@ public:
 
     bool empty() { return head->next == head; }
 
-    size_type size() { return distance(begin(),end()); }
+    size_type size() { return linstl::distance(begin(),end()); }
 
     reference front() { return *begin(); }
 
-    reference back()  { return *(--(--begin())); }
+    reference back()  { return *(--end()); }
 
     iterator insert(iterator pos,const value_type& value);
 
@@ -283,7 +283,10 @@ void list<T,Alloc>::remove(const value_type& value)
     while(tmp!=end())
     {
         if(*tmp == value)
+        {
             tmp = erase(tmp);
+        }
+        else tmp++;
     }
 }
 
@@ -334,6 +337,8 @@ void list<T,Alloc>::merge(list<T>& l)
             first1++;
     }
     if(first2 != last2) transfer(last1,first2,last2);
+    (l.head)->next = l.head;
+    (l.head)->pre  = l.head;
 }
 
 template<class T,class Alloc>
