@@ -142,8 +142,8 @@ struct m_type_traits<T*>
     typedef true_type    has_trivial_destructor;
     typedef true_type    is_POD_type;
 };
-//**********************************************************************************************
-//标准类型转换    
+
+//标准类型转换——————————————————————————————————————————————————————————————————————//   
 
 //移除引用
 template<class T>             //当模板参数为X时
@@ -166,22 +166,22 @@ struct remove_reference<T&&>   //同上
 
 
 //增加const
-//判断T是函数还是类型，若是函数不改变，若T是类型则加const
-template<class T,bool b>                            //
-struct add_const_12{};                              //            
+//判断T是函数还是类型，若是函数不改变，若T是类型则加const——————————————————————————————//
+template<class T,bool b>                            
+struct add_const_12{};                                      
 
-template<class T>                                   //
-struct add_const_12<T,false>                        //
-{                                                   //
-    typedef const T    type;                        //    
-};                                                  //        
+template<class T>                                   
+struct add_const_12<T,false>                        
+{                                                   
+    typedef const T    type;                          
+};                                                       
                                                         
-template<class T>                                   //
-struct add_const_12<T,true>                         //
-{                                                   //
-    typedef T          type;                        //
-};                                                  //
-//**************************************************//
+template<class T>                                   
+struct add_const_12<T,true>                         
+{                                                   
+    typedef T          type;                        
+};                                                 
+//
 
 template<class T>           //当参数模板为T时，add_const<T>::type = const T
 struct add_const
@@ -202,7 +202,7 @@ struct add_const<const T>
     typedef const T   type;
 };
 
-//移除指针
+//移除指针————————————————————————————————————————————————————————————————————————————//
 template<class T>
 struct remove_pointer
 {
@@ -215,7 +215,7 @@ struct remove_pointer<T*>
     typedef T         type;
 };
 
-//增添指针
+//增添指针————————————————————————————————————————————————————————————————————————————//
 template<class T>
 struct add_pointer
 {

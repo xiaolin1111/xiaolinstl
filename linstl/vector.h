@@ -8,9 +8,9 @@
 
 #include <initializer_list>
 #include "allocator.h"
-#include "allocator_algo.h"
+#include "allocator_alog.h"
 #include "except.h"    
-#include "algo.h"
+#include "alog.h"
 
 namespace linstl{
 

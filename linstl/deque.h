@@ -181,6 +181,7 @@ public:
     typedef T                           value_type;
     typedef T*                          pointer;
     typedef T&                          reference;
+    typedef const T&                    const_reference;
     typedef size_t                      size_type;
     typedef ptrdiff_t                   distance_type;
 
@@ -216,9 +217,9 @@ public:
 
     const_reverse_iterator rcend(){ const_reverse_iterator tmp(begin,head); return tmp; }
 
-    value_type& front(){ return *start; }
+    reference front(){ return *start; }
 
-    value_type& back(){ return *finish; } 
+    reference back(){ return *finish; } 
 
     size_type size(){ return len; }
 

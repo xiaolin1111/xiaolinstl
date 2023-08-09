@@ -82,7 +82,7 @@ inline typename iterator_traits<Iter>::difference_type*
 distance_type(const Iter&)
 {
     typedef typename Iter::difference_type difference_type;
-    return static_cast<difference_type*>(0);   //返回一个size_type* 
+    return static_cast<difference_type*>(0);   //返回size_type* 
 }
 
 template<class Iter>
@@ -90,9 +90,9 @@ inline typename iterator_traits<Iter>::value_type*
 value_type(const Iter&)
 {
     typedef typename iterator_traits<Iter>::value_type value_type;
-    return static_cast<value_type*>(0);        //返回一个T*
+    return static_cast<value_type*>(0);        //返回T*
 }
-//**********************************************************************
+//——————————————————————————————————————————————————————————————————————————————————
 //迭代器距离
 template<class InputIter>
 inline typename iterator_traits<InputIter>::difference_type
@@ -122,6 +122,7 @@ distance_12(RandomIter first,RandomIter last,random_iter_tag)
 {
     return last-first;
 }
+//————————————————————————————————————————————————————————————————————————————————————
 
 template<class Iter,class Distance>
 void
