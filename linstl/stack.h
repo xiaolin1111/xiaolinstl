@@ -26,9 +26,9 @@ public:
 
     void pop(){ stk.pop_back(); }
 
-    bool empty() { return stk.empty(); }
+    bool empty() const { return stk.empty(); }
 
-    size_type size() { return stk.size(); }
+    size_type size() const { return stk.size(); }
 private:
     Deq stk;
 };

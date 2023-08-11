@@ -149,9 +149,9 @@ public:
 
     const_reverse_iterator rcend() { const_reverse_iterator tmp(head); return tmp; }
 
-    bool empty() { return head->next == head; }
+    bool empty() const { return head->next == head; }
 
-    size_type size() { return linstl::distance(begin(),end()); }
+    size_type size() const { return linstl::distance(begin(),end()); }
 
     reference front() { return *begin(); }
 

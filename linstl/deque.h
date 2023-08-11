@@ -221,11 +221,11 @@ public:
 
     reference back(){ return *finish; } 
 
-    size_type size(){ return len; }
+    size_type size() const { return len; }
 
     void resize(size_type n);
 
-    bool empty(){ return (start == finish); } 
+    bool empty() const { return (start == finish); } 
 
     void push_back(value_type& value);
 
